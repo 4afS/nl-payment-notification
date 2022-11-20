@@ -28,11 +28,8 @@ const fetchMails = (interval: number): Mail[] => {
   }))
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const terms = (_interval: number) => `label:NL_利用通知`
-// const terms = (interval: number) => `label:NL_利用通知 after:${now - interval}`
-
-// const now = Math.floor(new Date().getTime() / 1000)
+const terms = (interval: number) => `label:NL_利用通知 after:${now - interval}`
+const now = Math.floor(new Date().getTime() / 1000)
 
 // =============================== payment.ts ===============================
 type Payment = {
