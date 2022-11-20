@@ -1,4 +1,4 @@
-import { removeDuplicates, Payment } from "../src/main";
+import { removeDuplicates, Payment, ellipsis } from "../src/main";
 
 const prev: Payment[] = [
   {
@@ -36,7 +36,6 @@ const current = [
 
 describe("remove duplicated payments", () => {
   it("should get only unique payments", () => {
-    console.log(removeDuplicates(prev, current))
     expect(removeDuplicates(prev, current)).toEqual([
       {
         id: "ID_3",
@@ -46,5 +45,15 @@ describe("remove duplicated payments", () => {
         price: 3000
       },
     ])
+  });
+});
+
+describe("ellipsis", () => {
+  it("should return same string", () => {
+    expect(ellipsis("ABCDEFGHIJKLMN", 20)).toEqual("ABCDEFGHIJKLMN")
+  });
+
+  it("should return 5 chars before and after", () => {
+    expect(ellipsis("ABCDEFGHIJKLMNOPQRSTU", 16)).toEqual("ABCDEFG...OPQRSTU")
   });
 });

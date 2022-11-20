@@ -9,17 +9,20 @@ const main = () => {
         prevPayments,
         mails.map(mail => parse(mail.id, mail.body)).filter((payment): payment is Payment => payment !== undefined)
       )
-    writePayments(payments)
+    if (payments.length > 0) {
+      writePayments(payments)
 
-    const allPayments = prevPayments.concat(payments)
-    const sum = allPayments.map(payment => payment.price).reduce((s, v) => s + v, 0)
-    console.log(`今月の利用額: ${sum}`)
+      const allPayments = prevPayments.concat(payments)
+      const sum = allPayments.map(payment => payment.price).reduce((s, v) => s + v, 0)
+      sendToSlack(sum, payments)
+    }
   }
 }
 
-const removeDuplicates = (prev: Payment[], current: Payment[]): Payment[] => {
+export const removeDuplicates = (prev: Payment[], current: Payment[]): Payment[] => {
+  const ids = prev.map(p => p.id)
   return current.filter(payment =>
-    prev.indexOf(payment) === -1
+    ids.indexOf(payment.id) === -1
   )
 }
 
@@ -42,11 +45,13 @@ const fetchMails = (interval: number): Mail[] => {
   }))
 }
 
-const terms = (interval: number) => `label:NL_利用通知 after:${now - interval}`
-const now = Math.floor(new Date().getTime() / 1000)
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const terms = (interval: number) => `label:NL_利用通知`
+// const terms = (interval: number) => `label:NL_利用通知 after:${now - interval}`
+// const now = Math.floor(new Date().getTime() / 1000)
 
 // =============================== payment.ts ===============================
-type Payment = {
+export type Payment = {
   id: string,
   date: Date,
   store: string,
@@ -130,8 +135,11 @@ const loadPayments = (): Payment[] => {
   const sheet = getSheet()
 
   const row = sheet.getLastRow()
+  if (row === 0) {
+    return []
+  }
 
-  const range = sheet.getRange(`A1:D${row}`)
+  const range = sheet.getRange(`A1:E${row}`)
   const values = range.getValues()
   return values.map(value => ({
     id: value[0],
@@ -140,4 +148,68 @@ const loadPayments = (): Payment[] => {
     content: value[3],
     price: Number(value[4]),
   }))
+}
+
+// =============================== slack.ts ===============================
+const sendToSlack = (total: number, payments: Payment[]) => {
+  const props = PropertiesService.getScriptProperties()
+  const url = props.getProperty("SLACK_URL")
+  if (url == null) {
+    throw "failed to get url from script property by `SLACK_URL`"
+  }
+
+  const data = JSON.stringify({
+    'blocks': `[${totalUsageMessage(total)},${paymentsMessage(payments)}]`
+  })
+
+  UrlFetchApp.fetch(
+    url,
+    {
+      method: 'post',
+      contentType: 'application/json',
+      payload: data,
+    }
+  )
+}
+
+const totalUsageMessage = (totalUsage: number): string => {
+  return `{
+  "type": "header",
+  "text": {
+    "type": "plain_text",
+    "text": "今月の利用金額が更新されました: ${totalUsage.toLocaleString()}円"
+  }
+}`
+}
+
+const paymentsMessage = (payments: Payment[]): string => {
+  return payments.map(payment => paymentMessage(payment)).join(",")
+}
+
+const paymentMessage = (payment: Payment): string => {
+  return `{
+  "type": "divider"
+},
+{
+  "type": "section",
+  "fields": [
+    {
+      "type": "mrkdwn",
+      "text": "*店舗:*\n${payment.store}"
+    },
+    {
+      "type": "mrkdwn",
+      "text": "*金額:*\n${payment.price.toLocaleString()}円"
+    }
+  ]
+}`
+}
+
+export const ellipsis = (str: string, max: number): string => {
+  const sep = Math.floor(max / 2) - 1
+  if (str.length <= max) {
+    return str
+  } else {
+    return `${str.slice(0, sep)}...${str.slice(str.length - sep, str.length)}`
+  }
 }
