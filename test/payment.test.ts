@@ -5,28 +5,28 @@ const body = `AAA　様\r\n\r\nいつも三井住友カードをご利用頂き�
 
 describe("parse mail body to get payment", () => {
   it("should get date", () => {
-    expect(getDate(body)).toStrictEqual(new Date("2022-11-06T10:11:00"))
+    expect(getDate(body)).toStrictEqual([new Date("2022-11-06T00:00:00")])
   });
 
   it("should get store", () => {
-    expect(getStore(body)).toEqual("Visa加盟店")
+    expect(getStore(body)).toEqual(["Visa加盟店"])
   });
 
   it("should get content", () => {
-    expect(getContent(body)).toEqual("買物")
+    expect(getContent(body)).toEqual(["買物"])
   });
 
   it("should get price", () => {
-    expect(getPrice(body)).toEqual(-10881)
+    expect(getPrice(body)).toEqual([-10881])
   });
 
   it("should parse all", () => {
-    expect(parse("ID", body)).toEqual({
+    expect(parse("ID", body)).toEqual([{
       id: "ID",
-      date: new Date("2022-11-06T10:11:00"),
+      date: new Date("2022-11-06T00:00:00"),
       store: "Visa加盟店",
       content: "買物",
       price: -10881
-    })
+    }])
   });
 });
