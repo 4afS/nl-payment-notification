@@ -1,6 +1,6 @@
 # nl-payment-notification
 
-## 導入店順
+## 導入手順
 このリポジトリをクローン
 claspのセットアップをしてローカルからpush
 GASのプロパティ設定画面から、Slackのwebhook URLを登録
