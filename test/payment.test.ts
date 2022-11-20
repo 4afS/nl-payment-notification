@@ -17,7 +17,7 @@ describe("parse mail body to get payment", () => {
   });
 
   it("should get price", () => {
-    expect(getPrice(body)).toEqual(10881)
+    expect(getPrice(body)).toEqual(-10881)
   });
 
   it("should parse all", () => {
