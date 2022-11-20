@@ -2,16 +2,30 @@ const main = () => {
   const mails = fetchMails(INTERVAL_SEC)
   console.log(mails)
   if (mails.length > 0) {
-    const payments: Payment[] = mails.map(mail => parse(mail.body)).filter((payment): payment is Payment => payment !== undefined)
-    console.log(payments)
+    const prevPayments = loadPayments()
+
+    const payments: Payment[] =
+      removeDuplicates(
+        prevPayments,
+        mails.map(mail => parse(mail.id, mail.body)).filter((payment): payment is Payment => payment !== undefined)
+      )
     writePayments(payments)
-    const allPayments = loadPayments()
+
+    const allPayments = prevPayments.concat(payments)
     const sum = allPayments.map(payment => payment.price).reduce((s, v) => s + v, 0)
     console.log(`今月の利用額: ${sum}`)
   }
 }
 
-const INTERVAL_SEC = 60
+const removeDuplicates = (prev: Payment[], current: Payment[]): Payment[] => {
+  return current.filter(payment =>
+    prev.indexOf(payment) === -1
+  )
+}
+
+const INTERVAL_MIN = 5
+const BUFFER_SEC = 5
+const INTERVAL_SEC = INTERVAL_MIN * 60 + BUFFER_SEC
 
 // =============================== gmail.ts ===============================
 type Mail = {
@@ -33,6 +47,7 @@ const now = Math.floor(new Date().getTime() / 1000)
 
 // =============================== payment.ts ===============================
 type Payment = {
+  id: string,
   date: Date,
   store: string,
   content: string,
@@ -68,10 +83,11 @@ export const getPrice = (body: string): number | undefined => {
   return price == undefined ? undefined : Number(price.trim())
 }
 
-export const parse = (body: string): Payment | undefined => {
+export const parse = (id: string, body: string): Payment | undefined => {
   try {
     return {
       /* eslint-disable @typescript-eslint/no-non-null-assertion */
+      id: id,
       date: getDate(body)!,
       store: getStore(body)!,
       content: getContent(body)!,
@@ -101,14 +117,13 @@ const getSheet = (): GoogleAppsScript.Spreadsheet.Sheet => {
 
 const writePayments = (payment: Payment[]) => {
   const sheet = getSheet()
-
   const startRow = sheet.getLastRow() + 1
   const row = payment.length
   // FIXME: get columns count from Payment object keys
-  const column = 4
+  const column = 5
 
   const range = sheet.getRange(startRow, 1, row, column)
-  range.setValues(payment.map(p => [p.date, p.store, p.content, p.price]))
+  range.setValues(payment.map(p => [p.id, p.date, p.store, p.content, p.price]))
 }
 
 const loadPayments = (): Payment[] => {
@@ -119,9 +134,10 @@ const loadPayments = (): Payment[] => {
   const range = sheet.getRange(`A1:D${row}`)
   const values = range.getValues()
   return values.map(value => ({
-    date: new Date(value[0]),
-    store: value[1],
-    content: value[2],
-    price: Number(value[3]),
+    id: value[0],
+    date: new Date(value[1]),
+    store: value[2],
+    content: value[3],
+    price: Number(value[4]),
   }))
 }
