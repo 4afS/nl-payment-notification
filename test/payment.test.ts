@@ -26,7 +26,7 @@ describe("parse mail body to get payment", () => {
       date: new Date("2022-11-06T10:11:00"),
       store: "Visa加盟店",
       content: "買物",
-      price: 10881
+      price: -10881
     })
   });
 });
