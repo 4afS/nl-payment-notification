@@ -30,7 +30,7 @@ export const removeDuplicates = (prev: Payment[], current: Payment[]): Payment[]
 }
 
 const INTERVAL_MIN = 5
-const BUFFER_SEC = 5
+const BUFFER_SEC = 60
 const INTERVAL_SEC = INTERVAL_MIN * 60 + BUFFER_SEC
 
 // =============================== gmail.ts ===============================
@@ -48,10 +48,8 @@ const fetchMails = (interval: number): Mail[] => {
   }))
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const terms = (interval: number) => `label:NL_利用通知`
-// const terms = (interval: number) => `label:NL_利用通知 after:${now - interval}`
-// const now = Math.floor(new Date().getTime() / 1000)
+const terms = (interval: number) => `label:NL_利用通知 after:${now - interval}`
+const now = Math.floor(new Date().getTime() / 1000)
 
 // =============================== payment.ts ===============================
 export type Payment = {
