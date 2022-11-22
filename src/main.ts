@@ -16,8 +16,9 @@ const main = () => {
       writePayments(payments)
 
       const allPayments = prevPayments.concat(payments)
-      const sum = allPayments.map(payment => payment.price).reduce((s, v) => s + v, 0)
-      sendToSlack(sum, payments)
+      const total = allPayments.map(payment => payment.price).reduce((s, v) => s + v, 0)
+      const currentUsed = payments.map(payment => payment.price).reduce((s, v) => s + v, 0)
+      sendToSlack(total, currentUsed, payments)
     }
   }
 }
@@ -29,9 +30,7 @@ export const removeDuplicates = (prev: Payment[], current: Payment[]): Payment[]
   )
 }
 
-const INTERVAL_MIN = 5
-const BUFFER_SEC = 60
-const INTERVAL_SEC = INTERVAL_MIN * 60 + BUFFER_SEC
+const INTERVAL_SEC = 7 * 24 * 60 * 60
 
 // =============================== gmail.ts ===============================
 type Mail = {
@@ -159,7 +158,7 @@ const loadPayments = (): Payment[] => {
 }
 
 // =============================== slack.ts ===============================
-const sendToSlack = (total: number, payments: Payment[]) => {
+const sendToSlack = (total: number, currentUsed: number, payments: Payment[]) => {
   const props = PropertiesService.getScriptProperties()
   const url = props.getProperty("SLACK_URL")
   if (url == null) {
@@ -167,7 +166,7 @@ const sendToSlack = (total: number, payments: Payment[]) => {
   }
 
   const data = JSON.stringify({
-    "text": `今月の利用金額が更新されました: ${total.toLocaleString()}円`,
+    "text": `今月の利用金額が更新されました: ${total.toLocaleString()}円 (${currentUsed >= 0 ? "+" : ""}${currentUsed.toLocaleString()})`,
     "blocks": `[${totalUsageMessage(total)},${paymentsMessage(payments)}]`
   })
 
