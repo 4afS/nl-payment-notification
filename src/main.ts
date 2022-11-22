@@ -166,7 +166,7 @@ const sendToSlack = (total: number, currentUsed: number, payments: Payment[]) =>
   }
 
   const data = JSON.stringify({
-    "text": `今月の利用金額が更新されました: ${total.toLocaleString()}円 (${currentUsed >= 0 ? "+" : ""}${currentUsed.toLocaleString()})`,
+    "text": `利用額: ${total.toLocaleString()}円 (${currentUsed >= 0 ? "+" : ""}${currentUsed.toLocaleString()})`,
     "blocks": `[${totalUsageMessage(total)},${paymentsMessage(payments)}]`
   })
 
