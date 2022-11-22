@@ -30,7 +30,7 @@ export const removeDuplicates = (prev: Payment[], current: Payment[]): Payment[]
   )
 }
 
-const INTERVAL_SEC = 24 * 60 * 60
+const INTERVAL_SEC = 60 * 60
 
 // =============================== gmail.ts ===============================
 type Mail = {
