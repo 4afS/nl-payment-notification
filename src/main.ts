@@ -54,53 +54,52 @@ const now = Math.floor(new Date().getTime() / 1000)
 export type Payment = {
   id: string,
   date: Date,
-  store: string,
-  content: string,
+  // store: string,
+  // content: string,
   price: number
 }
 
 const dateRegex = /[0-9]{4}\/(0[1-9]|1[0-2])\/(0[1-9]|[12][0-9]|3[01])/
 export const getDate = (body: string): Array<Date | undefined> => {
-  const re = /◇利用日：.*\r/g
+  const re = /ご利用日時：.*\r/g
   const lines = Array.from(body.matchAll(re))
   const dates = lines?.map(line => line?.[0].match(dateRegex)?.[0])
 
   return dates.map(date => date == undefined ? undefined : new Date(date.trim()))
 }
 
-export const getStore = (body: string): Array<string | undefined> => {
-  const re = /◇利用先：.*\r/g
-  const lines = Array.from(body.matchAll(re))
-  return lines.map(line => line?.[0].split("：")[1]?.trim())
-}
+// export const getStore = (body: string): Array<string | undefined> => {
+//   const re = /◇利用先：.*\r/g
+//   const lines = Array.from(body.matchAll(re))
+//   return lines.map(line => line?.[0].split("：")[1]?.trim())
+// }
 
-export const getContent = (body: string): Array<string | undefined> => {
-  const re = /◇利用取引：.*\r/g
-  const lines = Array.from(body.matchAll(re))
-  return lines.map(line => line?.[0].split("：")[1]?.trim())
-}
+// export const getContent = (body: string): Array<string | undefined> => {
+//   const re = /◇利用取引：.*\r/g
+//   const lines = Array.from(body.matchAll(re))
+//   return lines.map(line => line?.[0].split("：")[1]?.trim())
+// }
 
-const priceRegex = /[-]?(0|[1-9]\d*|[1-9]\d{0,2}(,\d{3})+)円/g
 export const getPrice = (body: string): Array<number | undefined> => {
-  const re = /◇利用金額：.*\r/g
+  const re = /[-]?(0|[1-9]\d*|[1-9]\d{0,2}(,\d{3})+)円/g
   const lines = Array.from(body.matchAll(re))
-  const prices = lines.map(line => line?.[0].match(priceRegex)?.[0].replace(/,|円/g, ""))
+  const prices = lines.map(line => line?.[0].replace(/,|円/g, ""))
   return prices.map(price => price == undefined ? undefined : Number(price.trim()))
 }
 
 export const parse = (id: string, body: string): Array<Payment> | undefined => {
   try {
     const dates = getDate(body)
-    const stores = getStore(body)
-    const contents = getContent(body)
+    // const stores = getStore(body)
+    // const contents = getContent(body)
     const prices = getPrice(body)
 
     /* eslint-disable @typescript-eslint/no-non-null-assertion */
     const payments: Payment[] = prices.map((price, i) => ({
       id: id,
       date: dates[i]!,
-      store: stores[i]!,
-      content: contents[i]!,
+      // store: stores[i]!,
+      // content: contents[i]!,
       price: price!
     }))
     /* eslint-enable @typescript-eslint/no-non-null-assertion */
@@ -135,7 +134,7 @@ const writePayments = (payment: Payment[]) => {
   const column = 5
 
   const range = sheet.getRange(startRow, 1, row, column)
-  range.setValues(payment.map(p => [p.id, p.date, p.store, p.content, p.price]))
+  range.setValues(payment.map(p => [p.id, p.date, "", "", p.price]))
 }
 
 const loadPayments = (): Payment[] => {
@@ -194,7 +193,7 @@ const paymentsMessage = (payments: Payment[]): string => {
   return payments.map(payment => paymentMessage(payment)).join(",")
 }
 
-const MAX_LENGTH = 16
+// const MAX_LENGTH = 16
 
 const paymentMessage = (payment: Payment): string => {
   return `{
@@ -203,10 +202,6 @@ const paymentMessage = (payment: Payment): string => {
 {
   "type": "section",
   "fields": [
-    {
-      "type": "mrkdwn",
-      "text": "店舗: *${ellipsis(payment.store, MAX_LENGTH)}*"
-    },
     {
       "type": "mrkdwn",
       "text": "金額: *${payment.price.toLocaleString()}円*"
